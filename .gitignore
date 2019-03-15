@@ -1,2 +1,3 @@
 individual_files/*
 *.bin
+*.pcap
