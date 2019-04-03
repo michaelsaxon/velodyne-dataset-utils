@@ -37,7 +37,7 @@ def pcap_to_dataset(pcap_file:str, scene_name:str):
 				if azumith_i < azumith_prev:
 					#it flipped around
 					count += 1
-					newFile = open(scene_name+"/{}.bin".format(frame_count),"wb")
+					newFile = open(scene_name+"/{}.dove".format(frame_count),"wb")
 					newFile.write(bytes(current_frame))
 					newFile.close()
 					current_frame = bytearray(channel_data)
@@ -51,13 +51,13 @@ def pcap_to_dataset(pcap_file:str, scene_name:str):
 					current_frame += channel_data
 				#print(azumith_i-azumith_prev)
 				azumith_prev = azumith_i
-	return count
+	return frame_count
 
 def main():
 	SCENE_NAME = "individual_files"
 	count = pcap_to_dataset(pcap_file="output.pcap", scene_name=SCENE_NAME)
 	with open("stats.csv","w+") as statfile:
-		statfile.write(SCENE_NAME+","+count+"\n")
+		statfile.write(SCENE_NAME+","+str(count)+"\n")
 		statfile.close()
 
 if __name__ == "__main__":

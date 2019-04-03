@@ -1,3 +1,4 @@
 individual_files/*
 *.bin
 *.pcap
+__pycache__/*

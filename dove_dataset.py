@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import numpy as np
 
 class DOVeDataset(Dataset):
 	"""Distance-Only Velodyne Dataset"""
@@ -23,17 +24,17 @@ class DOVeDataset(Dataset):
 			this_n_folder_clips = int(framecount/frames_per_clip)
 			self.n_folder_clips.append(this_n_folder_clips)
 			cumsum += framecount
-			cumulclips += this_n_folder_clips
+			cumclips += this_n_folder_clips
 			self.folders.append(folder)
 			self.framecounts.append(framecount)
 			self.cumulcounts.append(cumsum)
-			self.cumulclips.append(cumulclips)
+			self.cumulclips.append(cumclips)
 			#folder_clip_indices = [j*frames_per_clip+cumsum for j in range(this_n_folder_clips)]
 			#folder_clip_lens = [frames_per_clip]*(this_n_folder_clips-1) + [framecount-folder_clip_indices[-1]]
 
 
 	def readfile(self, fname):
-		f = open(fname, "rb"):
+		f = open(fname, "rb")
 		frame = f.read()
 		n = int(len(frame)/66)
 		azumiths = np.empty(n,np.float32)
