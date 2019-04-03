@@ -1,4 +1,4 @@
-with open("individual_files/1.frame","rb") as f:
+with open("individual_files/59.frame","rb") as f:
 	frame = f.read()
 	for i in range(int(len(frame)/66)):
 		#this is a single column
@@ -7,5 +7,5 @@ with open("individual_files/1.frame","rb") as f:
 		print("Azumith: {}".format(azumith/100.0))
 		#print("Channels:")
 		for j in range(32):
-			dist = int.from_bytes(frame[2+j*2:4+j*2],byteorder='little',signed=False)
-			#print("{}: {} m".format(j,dist*2/1000.0))
+			dist = int.from_bytes(block[2+j*2:4+j*2],byteorder='little',signed=False)*2/1000.0
+			print("{}: {} m".format(j,dist))
