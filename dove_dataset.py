@@ -21,7 +21,7 @@ class DOVeDataset(Dataset):
 		for line in stats_lines:
 			folder, framecount = line.split(",")
 			framecount = int(framecount)
-			this_n_folder_clips = int(framecount/frames_per_clip)
+			this_n_folder_clips = int(np.ceil(framecount/frames_per_clip))
 			self.n_folder_clips.append(this_n_folder_clips)
 			cumsum += framecount
 			cumclips += this_n_folder_clips
@@ -62,8 +62,8 @@ class DOVeDataset(Dataset):
 		for fidx in range(len(self.folders)):
 			if self.cumulclips[fidx+1] > idx:
 				folder_to_read = self.folders[fidx]
-				in_folder_idx_base = idx*self.frames_per_clip - self.cumulcounts[fidx]
-				n_frames = min(self.frames_per_clip, self.n_folder_clips[fidx]-in_folder_idx_base)
+				in_folder_idx_base = (idx-self.cumulclips[fidx])*self.frames_per_clip 
+				n_frames = min(self.frames_per_clip, self.framecounts[fidx]-in_folder_idx_base)
 				clip = []
 				for clip_frame_idx in range(n_frames):
 					fname = self.basepath+"/"+folder_to_read+"/"+str(in_folder_idx_base+clip_frame_idx)+".dove"
