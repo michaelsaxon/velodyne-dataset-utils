@@ -4,12 +4,11 @@ import numpy as np
 class DOVeDataset(Dataset):
 	"""Distance-Only Velodyne Dataset"""
 
-	def __init__(self, root_dir, frames_per_clip = 10, padding = False, raw:bool=True, granularity:int = 3):
+	def __init__(self, root_dir, frames_per_clip = 10, raw:bool=True, granularity:int = 3):
 		sf = open(root_dir+"/stats_file.csv", "r")
 		self.basepath = root_dir
 		self.folders = []
 		self.framecounts = []
-		self.padding = padding
 		self.raw = raw
 		self.granularity = granularity
 		cumsum = 0
@@ -57,11 +56,11 @@ class DOVeDataset(Dataset):
 		else:
 			# we create a consistent frame
 			# first create output frame
-			output = np.full((360*self.granularity,32),np.inf,dtype=np.uint32)
+			output = np.full((360*self.granularity,32),4294967295,dtype=np.uint32)
 			# convert azumiths to our range
-			azumith_inds = np.round(azumiths*self.granularity)
-			for az_i in len(azumith_inds):
-				az = int(azumith_inds[az_i])
+			azumith_inds = np.mod(np.round(azumiths/100*self.granularity),360*self.granularity)
+			for az_i in range(len(azumith_inds)):
+				az = int(azumith_inds[int(az_i)])
 				output[az,:] = np.minimum(output[az,:],distances[az_i,:])
 			return output
 
@@ -80,9 +79,15 @@ class DOVeDataset(Dataset):
 				folder_to_read = self.folders[fidx]
 				in_folder_idx_base = (idx-self.cumulclips[fidx])*self.frames_per_clip 
 				n_frames = min(self.frames_per_clip, self.framecounts[fidx]-in_folder_idx_base)
-				clip = []
+				if self.raw:
+					clip = []
+				else:
+					clip = np.empty((n_frames,360*self.granularity,32),dtype=np.uint32)
 				for clip_frame_idx in range(n_frames):
 					fname = self.basepath+"/"+folder_to_read+"/"+str(in_folder_idx_base+clip_frame_idx)+".dove"
 					frame = self.readfile(fname)
-					clip.append(frame)
+					if self.raw:
+						clip.append(frame)
+					else:
+						clip[clip_frame_idx,:,:] = frame
 				return clip
