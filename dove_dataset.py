@@ -4,12 +4,14 @@ import numpy as np
 class DOVeDataset(Dataset):
 	"""Distance-Only Velodyne Dataset"""
 
-	def __init__(self, root_dir, frames_per_clip = 10, padding = False):
+	def __init__(self, root_dir, frames_per_clip = 10, padding = False, raw:bool=True, granularity:int = 3):
 		sf = open(root_dir+"/stats_file.csv", "r")
 		self.basepath = root_dir
 		self.folders = []
 		self.framecounts = []
 		self.padding = padding
+		self.raw = raw
+		self.granularity = granularity
 		cumsum = 0
 		cumclips = 0
 		self.cumulcounts = [0]
@@ -50,7 +52,21 @@ class DOVeDataset(Dataset):
 				dist = int.from_bytes(block[2+j*2:4+j*2],byteorder='little',signed=False)*2
 				#print("{}: {} m".format(j,dist))
 				distances[i,j] = dist
-		return {'azumiths' : azumiths, 'distances' : distances}
+		if self.raw:
+			return {'azumiths' : azumiths, 'distances' : distances}
+		else:
+			# we create a consistent frame
+			# first create output frame
+			output = np.full((360*self.granularity,32),np.inf,dtype=np.uint32)
+			# convert azumiths to our range
+			azumith_inds = np.round(azumiths*self.granularity)
+			for az_i in len(azumith_inds):
+				az = int(azumith_inds[az_i])
+				output[az,:] = np.minimum(output[az,:],distances[az_i,:])
+			return output
+
+
+
 
 
 	def __len__(self):
