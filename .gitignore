@@ -2,3 +2,4 @@ individual_files/*
 *.bin
 *.pcap
 __pycache__/*
+*.csv

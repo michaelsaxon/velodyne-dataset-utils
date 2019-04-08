@@ -39,7 +39,7 @@ class DOVeDataset(Dataset):
 		frame = f.read()
 		n = int(len(frame)/66)
 		azumiths = np.empty(n,np.float32)
-		distances = np.empty([n,32],np.uint32)
+		distances = np.empty([n,32],np.int32)
 		for i in range(n):
 			#this is a single column
 			block = frame[i*66:i*66+66]
@@ -56,7 +56,7 @@ class DOVeDataset(Dataset):
 		else:
 			# we create a consistent frame
 			# first create output frame
-			output = np.full((360*self.granularity,32),4294967295,dtype=np.uint32)
+			output = np.full((360*self.granularity,32),4294967295,dtype=np.int32)
 			# convert azumiths to our range
 			azumith_inds = np.mod(np.round(azumiths/100*self.granularity),360*self.granularity)
 			for az_i in range(len(azumith_inds)):
@@ -82,7 +82,7 @@ class DOVeDataset(Dataset):
 				if self.raw:
 					clip = []
 				else:
-					clip = np.empty((n_frames,360*self.granularity,32),dtype=np.uint32)
+					clip = np.zeros((10,360*self.granularity,32),dtype=np.int32)
 				for clip_frame_idx in range(n_frames):
 					fname = self.basepath+"/"+folder_to_read+"/"+str(in_folder_idx_base+clip_frame_idx)+".dove"
 					frame = self.readfile(fname)
