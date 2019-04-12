@@ -1,4 +1,4 @@
-import sys, os, pcapy
+import sys, os, pcapy, glob
 
 class pcapIter:
 	def __init__(self, fname):
@@ -14,11 +14,12 @@ class pcapIter:
 		else:
 			return packet
 
-def pcap_to_dataset(pcap_file:str, scene_name:str):
+
+def pcap_to_dataset(pcap_file:str, scene_name:str, top_directory:str):
 	try:
-		os.stat(scene_name)
+		os.stat(top_directory+'/'+scene_name)
 	except:
-		os.mkdir(scene_name)
+		os.mkdir(top_directory+'/'+scene_name)
 	pc = pcapIter(pcap_file)
 	azumith_prev = 0
 	count = 0
@@ -53,12 +54,22 @@ def pcap_to_dataset(pcap_file:str, scene_name:str):
 				azumith_prev = azumith_i
 	return frame_count
 
-def main():
-	SCENE_NAME = "individual_files"
-	count = pcap_to_dataset(pcap_file="output.pcap", scene_name=SCENE_NAME)
+
+def pcap_directory_to_dataset(pcap_directory:str, output_directory:str):)
 	with open("stats.csv","w+") as statfile:
-		statfile.write(SCENE_NAME+","+str(count)+"\n")
-		statfile.close()
+		for f in glob.glob(pcap_directory):
+			# f is a pcap file
+			# name the folder that
+			count = pcap_to_dataset(pcap_file=pcap_directory+'/'+f,scene_name=f,top_directory=output_directory)
+			statfile.write(f+","+str(count)+"\n")
+			statfile.close()
+
+
+def main():
+	pd = raw_input("input pcap_directory")
+	od = raw_input("output dove directory")
+	pcap_directory_to_dataset(pd,od)
+
 
 if __name__ == "__main__":
     main()
