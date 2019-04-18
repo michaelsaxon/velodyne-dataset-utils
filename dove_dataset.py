@@ -56,12 +56,13 @@ class DOVeDataset(Dataset):
 		else:
 			# we create a consistent frame
 			# first create output frame
-			output = np.full((360*self.granularity,32),4294967295,dtype=np.int32)
+			output = np.full((360*self.granularity,32),150000,dtype=np.uint32)
 			# convert azumiths to our range
 			azumith_inds = np.mod(np.round(azumiths/100*self.granularity),360*self.granularity)
 			for az_i in range(len(azumith_inds)):
 				az = int(azumith_inds[int(az_i)])
 				output[az,:] = np.minimum(output[az,:],distances[az_i,:])
+				#print((np.min(output[az,:]),np.min(distances[az_i,:])))
 			return output
 
 
