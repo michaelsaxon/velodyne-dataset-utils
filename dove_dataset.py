@@ -6,6 +6,8 @@ class DOVeDataset(Dataset):
 
 	def __init__(self, root_dir, frames_per_clip = 10, raw:bool=True, granularity:int = 3):
 		sf = open(root_dir+"/stats_file.csv", "r")
+		self.split = False
+		self.idxmapping = None
 		self.basepath = root_dir
 		self.folders = []
 		self.framecounts = []
@@ -66,7 +68,18 @@ class DOVeDataset(Dataset):
 			return output
 
 
-
+	def splits(self, train_pct:float = 0.8, val_pct:float = 0.1, test_pct:float = 0.1):
+		if not train_pct+val_pct+test_pct == 1.0:
+			raise Exception('Percents don\'t sum to 1!')
+		else:
+			n_indices = sum(self.n_folder_clips)
+			indices = np.array(range(n_indices))
+			np.random.shuffle(indices)
+			start_val = int(n_indices*train_pct)
+			start_test = int(n_indices*(train_pct+val_pct))			
+			self.idxmapping = indices
+			self.split = True			
+			return (start_val, start_test)
 
 
 	def __len__(self):
@@ -75,6 +88,8 @@ class DOVeDataset(Dataset):
 
 	def __getitem__(self, idx):
 		#find which folder this index falls in
+		if self.split:
+			idx = int(self.idxmapping[idx])
 		for fidx in range(len(self.folders)):
 			if self.cumulclips[fidx+1] > idx:
 				folder_to_read = self.folders[fidx]
@@ -92,3 +107,8 @@ class DOVeDataset(Dataset):
 					else:
 						clip[clip_frame_idx,:,:] = frame
 				return clip
+
+
+class DOVeDatasetMaker():
+	def __init__(self, root_dir, frames_per_clip = 10, raw:bool=True, granularity:int = 3, train_pct:float = 0.8, val_pct:float = 0.1, test_pct:float = 0.1):
+		

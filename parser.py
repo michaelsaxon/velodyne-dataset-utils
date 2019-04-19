@@ -38,7 +38,7 @@ def pcap_to_dataset(pcap_file:str, scene_name:str, top_directory:str):
 				if azumith_i < azumith_prev:
 					#it flipped around
 					count += 1
-					newFile = open(scene_name+"/{}.dove".format(frame_count),"wb")
+					newFile = open(top_directory+"/"+scene_name+"/{}.dove".format(frame_count),"wb")
 					newFile.write(bytes(current_frame))
 					newFile.close()
 					current_frame = bytearray(channel_data)
@@ -55,19 +55,22 @@ def pcap_to_dataset(pcap_file:str, scene_name:str, top_directory:str):
 	return frame_count
 
 
-def pcap_directory_to_dataset(pcap_directory:str, output_directory:str):)
-	with open("stats.csv","w+") as statfile:
-		for f in glob.glob(pcap_directory):
-			# f is a pcap file
-			# name the folder that
-			count = pcap_to_dataset(pcap_file=pcap_directory+'/'+f,scene_name=f,top_directory=output_directory)
+def pcap_directory_to_dataset(pcap_directory:str, output_directory:str):
+	with open(os.path.join(output_directory+"/"+"stats.csv"),"w+") as statfile:
+		print(glob.glob(pcap_directory+"/*.pcap"))
+		for f in glob.glob(pcap_directory+"/*.pcap"):
+			# f is the full path for each pcap file from here
+			# the scene name is just the last part
+			scenename = f.split("/")[-1].split(".")[0]
+			print(scenename)
+			count = pcap_to_dataset(pcap_file=f,scene_name=scenename,top_directory=output_directory)
 			statfile.write(f+","+str(count)+"\n")
-			statfile.close()
+	statfile.close()
 
 
 def main():
-	pd = raw_input("input pcap_directory")
-	od = raw_input("output dove directory")
+	pd = "./../../../../media/labcomp3/Sensor Fustion Data Drive/dataset/"
+	od = "./../../Dataset_Dove"
 	pcap_directory_to_dataset(pd,od)
 
 
