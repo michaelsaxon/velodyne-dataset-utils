@@ -4,37 +4,17 @@ import numpy as np
 class DOVeDataset(Dataset):
 	"""Distance-Only Velodyne Dataset"""
 
-	def __init__(self, root_dir, frames_per_clip = 10, raw:bool=True, granularity:int = 3):
-		sf = open(root_dir+"/stats_file.csv", "r")
-		self.split = False
-		self.idxmapping = None
+	def __init__(self, root_dir, idxmapping, length, cpf, ccpf, folders, framecounts, frames_per_clip = 10, raw:bool=True, granularity:int = 3):
+		self.length = length
+		self.idxmapping = idxmapping
 		self.basepath = root_dir
-		self.folders = []
-		self.framecounts = []
+		self.folders = folders
+		self.framecounts = framecounts
 		self.raw = raw
 		self.granularity = granularity
-		cumsum = 0
-		cumclips = 0
-		self.cumulcounts = [0]
-		self.cumulclips = [0]
-		self.n_folder_clips = []
+		self.cumulclips = ccpf
+		self.n_folder_clips = cpf
 		self.frames_per_clip = frames_per_clip
-		stats_lines = sf.readlines()
-		sf.close()
-		for line in stats_lines:
-			folder, framecount = line.split(",")
-			framecount = int(framecount)
-			this_n_folder_clips = int(np.ceil(framecount/frames_per_clip))
-			self.n_folder_clips.append(this_n_folder_clips)
-			cumsum += framecount
-			cumclips += this_n_folder_clips
-			self.folders.append(folder)
-			self.framecounts.append(framecount)
-			self.cumulcounts.append(cumsum)
-			self.cumulclips.append(cumclips)
-			#folder_clip_indices = [j*frames_per_clip+cumsum for j in range(this_n_folder_clips)]
-			#folder_clip_lens = [frames_per_clip]*(this_n_folder_clips-1) + [framecount-folder_clip_indices[-1]]
-
 
 	def readfile(self, fname):
 		f = open(fname, "rb")
@@ -68,28 +48,14 @@ class DOVeDataset(Dataset):
 			return output
 
 
-	def splits(self, train_pct:float = 0.8, val_pct:float = 0.1, test_pct:float = 0.1):
-		if not train_pct+val_pct+test_pct == 1.0:
-			raise Exception('Percents don\'t sum to 1!')
-		else:
-			n_indices = sum(self.n_folder_clips)
-			indices = np.array(range(n_indices))
-			np.random.shuffle(indices)
-			start_val = int(n_indices*train_pct)
-			start_test = int(n_indices*(train_pct+val_pct))			
-			self.idxmapping = indices
-			self.split = True			
-			return (start_val, start_test)
-
-
 	def __len__(self):
-		return sum(self.n_folder_clips)
+		return self.length
 
 
 	def __getitem__(self, idx):
+		#by performing the index mapping right away all the other math stays the same as normal
+		idx = int(self.idxmapping[idx])
 		#find which folder this index falls in
-		if self.split:
-			idx = int(self.idxmapping[idx])
 		for fidx in range(len(self.folders)):
 			if self.cumulclips[fidx+1] > idx:
 				folder_to_read = self.folders[fidx]
@@ -109,6 +75,43 @@ class DOVeDataset(Dataset):
 				return clip
 
 
-class DOVeDatasetMaker():
-	def __init__(self, root_dir, frames_per_clip = 10, raw:bool=True, granularity:int = 3, train_pct:float = 0.8, val_pct:float = 0.1, test_pct:float = 0.1):
-		
+def CreateDOVeDatasets(root_dir, frames_per_clip = 10, raw:bool=False, granularity:int = 3, train_pct:float = 0.8, val_pct:float = 0.1, test_pct:float = 0.1):
+	if not train_pct+val_pct+test_pct == 1.0:
+		raise Exception('Percents don\'t sum to 1!')
+	else:
+		#we need to evaluate the same set of folders and stuff.
+		sf = open(root_dir+"/stats.csv", "r")
+		stats_lines = sf.readlines()
+		sf.close()
+		folders = []
+		framecounts = []
+		raw = raw
+		granularity = granularity
+		cumclips = 0
+		cumulclips = [0]
+		n_folder_clips = []
+		frames_per_clip = frames_per_clip
+		for line in stats_lines:
+			folder, framecount = line.split(",")
+			framecount = int(framecount)
+			this_n_folder_clips = int(np.ceil(framecount/frames_per_clip))
+			n_folder_clips.append(this_n_folder_clips)
+			cumclips += this_n_folder_clips
+			folders.append(folder)
+			framecounts.append(framecount)
+			cumulclips.append(cumclips)
+		#now we have
+		#in cumulclips, the start clip index for each
+		#in n_folder_clips = the number of clips in each folder
+		total_clips = sum(n_folder_clips)
+		indices = np.array(range(total_clips),dtype=np.int32)
+		np.random.shuffle(indices)
+		n_train = int(total_clips*train_pct)
+		n_val = int(total_clips*val_pct)
+		s_test = n_train + n_val
+		n_test = int(total_clips*test_pct)
+		#root_dir, idxmapping, length, cpf, ccpf, folders, framecounts, frames_per_clip, raw, granularity
+		train_dataset = DOVeDataset(root_dir, indices[:n_train], n_train, n_folder_clips, cumulclips, folders, framecounts, frames_per_clip, raw, granularity)
+		val_dataset = DOVeDataset(root_dir, indices[n_train:s_test], n_val, n_folder_clips, cumulclips, folders, framecounts, frames_per_clip, raw, granularity)
+		test_dataset = DOVeDataset(root_dir, indices[s_test:], n_test, n_folder_clips, cumulclips, folders, framecounts, frames_per_clip, raw, granularity)
+		return (train_dataset, val_dataset, test_dataset)

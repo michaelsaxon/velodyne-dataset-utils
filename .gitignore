@@ -1,4 +1,4 @@
-individual_files/*
+*/*.dove
 *.bin
 *.pcap
 __pycache__/*

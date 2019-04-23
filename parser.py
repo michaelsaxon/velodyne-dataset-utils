@@ -64,14 +64,12 @@ def pcap_directory_to_dataset(pcap_directory:str, output_directory:str):
 			scenename = f.split("/")[-1].split(".")[0]
 			print(scenename)
 			count = pcap_to_dataset(pcap_file=f,scene_name=scenename,top_directory=output_directory)
-			statfile.write(f+","+str(count)+"\n")
+			statfile.write(scenename+","+str(count)+"\n")
 	statfile.close()
 
 
 def main():
-	pd = "./../../../../media/labcomp3/Sensor Fustion Data Drive/dataset/"
-	od = "./../../Dataset_Dove"
-	pcap_directory_to_dataset(pd,od)
+	pcap_directory_to_dataset('.','.')
 
 
 if __name__ == "__main__":
