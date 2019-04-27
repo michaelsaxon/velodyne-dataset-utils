@@ -4,7 +4,7 @@ import numpy as np
 class DOVeDataset(Dataset):
 	"""Distance-Only Velodyne Dataset"""
 
-	def __init__(self, root_dir, idxmapping, length, cpf, ccpf, folders, framecounts, frames_per_clip = 10, raw:bool=True, granularity:int = 3):
+	def __init__(self, root_dir, idxmapping, length, cpf, ccpf, folders, framecounts, frames_per_clip = 10, raw:bool=True, granularity:int = 3, d_max: float = 50):
 		self.length = length
 		self.idxmapping = idxmapping
 		self.basepath = root_dir
@@ -15,6 +15,7 @@ class DOVeDataset(Dataset):
 		self.cumulclips = ccpf
 		self.n_folder_clips = cpf
 		self.frames_per_clip = frames_per_clip
+		self.d_max = d_max
 
 	def readfile(self, fname):
 		f = open(fname, "rb")
@@ -38,7 +39,7 @@ class DOVeDataset(Dataset):
 		else:
 			# we create a consistent frame
 			# first create output frame
-			output = np.full((360*self.granularity,32),150000,dtype=np.uint32)
+			output = np.full((360*self.granularity,32),int(self.d_max*1000),dtype=np.uint32)
 			# convert azumiths to our range
 			azumith_inds = np.mod(np.round(azumiths/100*self.granularity),360*self.granularity)
 			for az_i in range(len(azumith_inds)):
@@ -80,7 +81,7 @@ def CreateDOVeDatasets(root_dir, frames_per_clip = 10, raw:bool=False, granulari
 		raise Exception('Percents don\'t sum to 1!')
 	else:
 		#we need to evaluate the same set of folders and stuff.
-		sf = open(root_dir+"/stats.csv", "r")
+		sf = open(root_dir+"/stats_file.csv", "r")
 		stats_lines = sf.readlines()
 		sf.close()
 		folders = []
