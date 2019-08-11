@@ -81,7 +81,7 @@ def CreateDOVeDatasets(root_dir, frames_per_clip = 10, raw:bool=False, granulari
 		raise Exception('Percents don\'t sum to 1!')
 	else:
 		#we need to evaluate the same set of folders and stuff.
-		sf = open(root_dir+"/stats_file.csv", "r")
+		sf = open(root_dir+"/stats.csv", "r")
 		stats_lines = sf.readlines()
 		sf.close()
 		folders = []
