@@ -16,11 +16,13 @@ class DOVeDataset(Dataset):
 		self.n_folder_clips = cpf
 		self.frames_per_clip = frames_per_clip
 		self.d_max = d_max
-
+		self.order = [31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1,30,28,26,24,22,20,28,16,14,12,10,8,6,4,2,0]
+		
 	def readfile(self, fname):
 		f = open(fname, "rb")
 		frame = f.read()
 		n = int(len(frame)/66)
+		print(n)
 		azumiths = np.empty(n,np.float32)
 		distances = np.empty([n,32],np.int32)
 		for i in range(n):
@@ -30,8 +32,9 @@ class DOVeDataset(Dataset):
 			#print("Azumith: {}".format(azumith/100.0))
 			#print("Channels:")
 			azumiths[i] = azumith
-			for j in range(32):
-				dist = int.from_bytes(block[2+j*2:4+j*2],byteorder='little',signed=False)*2
+			for o,j in zip(self.order,range(32)): #range(32):
+				#dist = int.from_bytes(block[2+j*2:4+j*2],byteorder='little',signed=False)*2
+				dist = int.from_bytes(block[2+o*2:4+o*2],byteorder='little',signed=False)*2
 				#print("{}: {} m".format(j,dist))
 				distances[i,j] = dist
 		if self.raw:
