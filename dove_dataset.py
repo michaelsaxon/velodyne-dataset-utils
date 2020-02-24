@@ -22,7 +22,6 @@ class DOVeDataset(Dataset):
 		f = open(fname, "rb")
 		frame = f.read()
 		n = int(len(frame)/66)
-		print(n)
 		azumiths = np.empty(n,np.float32)
 		distances = np.empty([n,32],np.int32)
 		for i in range(n):
